@@ -27,7 +27,7 @@ llm.py中填入openai格式的api_key，base_url，model_name
 
 ### **架构**
 
-![1733321294461](https://file+.vscode-resource.vscode-cdn.net/d%3A/github/llm2voice/image/README/introduce.png)
+![1733321294461](./image/README/introduce.png)
 
 ### 特性
 
