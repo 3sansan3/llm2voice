@@ -3,12 +3,30 @@ from llm import OpenAILLM
 from log import log
 from input_handler import UserInputHandler
 from tts_module.tts import TTS
+import sounddevice as sd
+
+def select_audio_device():
+    """选择音频输出设备"""
+    target_name = "Voicemeeter Input (VB-Audio Voicemeeter VAIO)"
+    devices = sd.query_devices()
+    
+    for device in devices:
+        if device['max_output_channels'] > 0 and device['name'] == target_name:
+            log.info(f"使用音频设备: {device['name']}")
+            return device
+            
+    log.error(f"未找到目标音频设备: {target_name}")
+    return None
 
 async def main():
     """简化后的主函数"""
+    device = select_audio_device()
+    if not device:
+        return
+        
     llm = OpenAILLM()
     input_handler = UserInputHandler()
-    tts = TTS()
+    tts = TTS(audio_device=device)
     
     await tts.start()
     

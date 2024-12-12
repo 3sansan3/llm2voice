@@ -14,7 +14,7 @@ class OpenAILLM:
         """
 
         self.model_name = "deepseek-chat"
-        self.api_key = "sk-213213123"
+        self.api_key = "sk-123"
         self.base_url = "https://api.deepseek.com"
         self.client = openai.OpenAI(api_key=self.api_key, base_url=self.base_url)
 

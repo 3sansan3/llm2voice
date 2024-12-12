@@ -8,10 +8,10 @@ from log import log
 import queue
 
 class TTS:
-    def __init__(self, max_workers: int = 5):
+    def __init__(self, max_workers: int = 5, audio_device = None):
         self.sequence_manager = SequenceManager()
         self.engine = EdgeEngine()
-        self.mpv_player = MPVPlayer()
+        self.mpv_player = MPVPlayer(audio_device=audio_device)
         self.max_workers = max_workers
         self.sentence_processor = SentenceProcessor(self.sequence_manager, self.max_workers)
         self._tasks: Dict[int, asyncio.Task] = {}

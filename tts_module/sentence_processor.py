@@ -34,14 +34,12 @@ class SentenceProcessor:
         for item in gen:
             yield item
 
-    async def process_sentences(self, text_generator: Union[Generator[str, None, None], AsyncGenerator[str, None]], 
-                   callback: Callable[[str, int], None] = None) -> None:
+    async def process_sentences(self, text_generator: Union[Generator[str, None, None], AsyncGenerator[str, None]], callback: Callable[[str, int], None] = None) -> None:
         """处理文本生成器中的句子，生成序号并传递给回调"""
         if not self._running:
             raise RuntimeError("句子处理器尚未启动")
 
         start_time = time.time()
-        
         if not hasattr(text_generator, '__aiter__'):
             text_generator = self._to_async_generator(text_generator)
 
@@ -61,7 +59,6 @@ class SentenceProcessor:
                     log.info("processor跳过剩余句子")
                     self.skip = False
 
-                await asyncio.sleep(0)
                 if callback:
                     self.executor.submit(self._sync_callback, callback, sentence, sequence)
 

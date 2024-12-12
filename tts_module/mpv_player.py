@@ -8,7 +8,7 @@ from log import log
 class MPVPlayer:
     """使用MPV播放音频流的播放器类"""
 
-    def __init__(self):
+    def __init__(self, audio_device=None):
         self.mpv_process = None
         self.chunk_queue = queue.Queue()
         self.is_playing = False
@@ -16,13 +16,26 @@ class MPVPlayer:
         self.play_thread = None
         self._lock = threading.Lock()
         self.first_chunk = True
+        self.audio_device = audio_device
 
     def start(self):
         """启动MPV播放器进程"""
         if self.is_playing:
             return
         try:
-            mpv_command = ["mpv", "--no-cache", "--no-terminal", "--", "fd://0"]
+            mpv_command = ["mpv", "--no-cache", "--no-terminal"]
+            
+            # 添加音频输出配置
+            if self.audio_device:
+                # Windows平台使用wasapi作为音频输出
+                mpv_command.extend(["--ao=wasapi"])
+                # 将设备名称作为设备ID
+                device_id = self.audio_device['name']
+                mpv_command.extend([f"--audio-device=wasapi/{device_id}"])
+                log.info(f"使用音频设备: {device_id}")
+                    
+            mpv_command.extend(["--", "fd://0"])
+            
             self.mpv_process = subprocess.Popen(
                 mpv_command,
                 stdin=subprocess.PIPE,
