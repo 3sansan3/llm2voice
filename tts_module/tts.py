@@ -1,17 +1,26 @@
 import asyncio
 import threading
 from typing import AsyncGenerator, Optional, Dict
-from tts_module.engine import EdgeEngine
-from tts_module.mpv_player import MPVPlayer
+from tts_module.engine.edge_engine import EdgeEngine
+from tts_module.engine.openai_engine import OpenAIEngine
+from tts_module.player.mpv_player import MPVPlayer
+from tts_module.player.py_player import FFPlayer
 from tts_module.sentence_processor import SentenceProcessor
 from log import log
 import queue
 
 class TTS:
-    def __init__(self, max_workers: int = 5, audio_device = None):
+    def __init__(self, max_workers: int = 5, audio_device = None,engine: str = "12",stream: bool = True):
         self.sequence_manager = SequenceManager()
-        self.engine = EdgeEngine()
-        self.mpv_player = MPVPlayer(audio_device=audio_device)
+        if engine == "edge":
+            self.engine = EdgeEngine()
+        else:
+            self.engine = OpenAIEngine()
+            stream = False
+        if stream:
+            self.player = MPVPlayer(audio_device=audio_device)
+        else:
+            self.player = FFPlayer(audio_device=audio_device)
         self.max_workers = max_workers
         self.sentence_processor = SentenceProcessor(self.sequence_manager, self.max_workers)
         self._tasks: Dict[int, asyncio.Task] = {}
@@ -20,13 +29,13 @@ class TTS:
 
     async def start(self):
         """启动TTS服务"""
-        self.mpv_player.start()
-        self.sentence_processor.start()  # 移除await
+        self.player.start()
+        self.sentence_processor.start()
 
     async def stop(self):
         """停止TTS服务"""
         self.sentence_processor.stop()
-        self.mpv_player.stop()
+        self.player.stop()
 
     def skip_remaining(self):
         """跳过剩余句子"""
@@ -38,6 +47,7 @@ class TTS:
             for sequence, loop in self._loops.items():
                 if sequence in self._tasks and not self._tasks[sequence].done():
                     loop.call_soon_threadsafe(self._tasks[sequence].cancel)
+        self.sentence_processor.skip = False # 重置跳过标志
 
     async def process_stream(self, text_generator: AsyncGenerator[str, None]):
         """处理文本流"""
@@ -70,9 +80,8 @@ class TTS:
             log.error(f"处理失败: {str(e)}")
 
     async def _process_audio2(self, sentence: str, sequence: int):
-        """异步音频处理函数 - 确保按序播放"""
+        """异步音频处理函数 - 支持流式和非流式播放"""
         try:
-            # 使用异步队列作为缓冲区
             chunk_queue = asyncio.Queue()
             
             async def producer():
@@ -93,13 +102,16 @@ class TTS:
                     while True:
                         chunk = await chunk_queue.get()
                         if chunk is None:  # 结束标记
+                            self.player.add_chunk(None)  # 添加这行，发送结束标记到播放器
                             break
                         if self.sequence_manager.quene.empty():
+                            self.player.add_chunk(None)  # 添加这行，发送结束标记到播放器
                             log.info(f"当前正在播放的序号{sequence}，被终止！！！！！当前队列无序号")
                             return
                         if self.sequence_manager.quene.queue[0] == sequence:
-                            self.mpv_player.add_chunk(chunk)
+                            self.player.add_chunk(chunk)
                 except asyncio.CancelledError:
+                    self.player.add_chunk(None)  # 添加这行，发送结束标记到播放器
                     log.info(f"音频播放被取消 - 序号{sequence}")
                     raise
 

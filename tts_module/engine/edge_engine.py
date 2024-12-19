@@ -1,20 +1,19 @@
 from pydantic import BaseModel
-from typing import Optional, AsyncIterator, Tuple
+from typing import Optional, AsyncIterator
 import edge_tts
 from log import log
 import time
-import asyncio
+from .base_engine import TTSEngine
 
-
-class TTSConfig(BaseModel):
+class EdgeConfig(BaseModel):
     voice: str = "zh-CN-XiaoxiaoNeural"
     rate: str = "+13%"
     volume: str = "+12%"
     pitch: str = "+37Hz"
 
-class EdgeEngine:
-    def __init__(self, config: Optional[TTSConfig] = None):
-        self.config = config or TTSConfig()
+class EdgeEngine(TTSEngine):
+    def __init__(self, config: Optional[EdgeConfig] = None):
+        self.config = config or EdgeConfig()
 
     async def synthesize(self, text: str) -> AsyncIterator[bytes]:
         """返回异步迭代器"""

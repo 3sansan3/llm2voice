@@ -1,5 +1,4 @@
 from typing import Dict, Generator, Optional, Any, Tuple
-import yaml
 import openai
 from openai.types.chat.chat_completion_chunk import ChoiceDeltaToolCall
 from log import log
@@ -55,3 +54,13 @@ class OpenAILLM:
         except Exception as e:
             log.error(f"Function call response error: {str(e)}")
             yield f"Error: {str(e)}", None
+    def fake_response(self, dialogue: list) -> Generator[str, None, None]:
+        """
+        模拟对话响应生成器
+        """
+        text = "星光洒满夜空，思绪随风飘散，我心支离破碎。"
+        
+        time.sleep(0.5)
+        for char in text:
+            yield char
+            # time.sleep(0.01)  # 只保留字符间延时，使输出更流畅

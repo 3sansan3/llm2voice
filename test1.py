@@ -35,7 +35,7 @@ async def main():
             user_input = await input_handler.get_next_input()
             if user_input:
                 dialogue = [{"role": "user", "content": user_input}]
-                response_generator = llm.response(dialogue)
+                response_generator = llm.fake_response(dialogue)
                 await tts.process_stream(response_generator)
             await asyncio.sleep(0.1)
 
@@ -44,8 +44,8 @@ async def main():
         
         log.info("中断测试")
         await input_handler.get_user_input()
-        await asyncio.sleep(3)
-        tts.skip_remaining()
+        # await asyncio.sleep(3)
+        # tts.skip_remaining()
         log.info("开始接收用户输入...")
         while input_handler.is_running():
             await input_handler.get_user_input()
